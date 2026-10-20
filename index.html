@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Feliz Cumpleaños, Piero! 🎉</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Pacifico&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        midnight: '#0f172a',
+                        gold: '#fbbf24',
+                        goldDark: '#d97706',
+                        accentPurp: '#8b5cf6',
+                        cajamarcaGreen: '#10b981',
+                        limaBlue: '#0284c7'
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        festive: ['Pacifico', 'cursive'],
+                    },
+                    animation: {
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'flame': 'flame 0.8s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { textShadow: '0 0 10px #fbbf24, 0 0 20px #fbbf24, 0 0 30px #d97706' },
+                            '100%': { textShadow: '0 0 20px #fbbf24, 0 0 30px #f59e0b, 0 0 40px #d97706' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-12px)' }
+                        },
+                        flame: {
+                            '0%': { transform: 'scale(1) rotate(-2deg)', opacity: '0.9' },
+                            '100%': { transform: 'scale(1.15) rotate(2deg)', opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        /* Candle Flame Styling */
+        .flame-element {
+            background: radial-gradient(ellipse at bottom, #fef08a 0%, #f59e0b 60%, #dc2626 100%);
+            box-shadow: 0 0 12px #f59e0b, 0 0 24px #fbbf24;
+            border-radius: 50% 50% 20% 20%;
+        }
+
+        .candle-out .flame-element {
+            display: none !important;
+        }
+
+        /* Smoke effect when candle is blown out */
+        .smoke {
+            display: none;
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 20px;
+            background: rgba(200, 200, 200, 0.5);
+            border-radius: 50%;
+            filter: blur(4px);
+            animation: smokeRise 1.5s forwards;
+        }
+
+        .candle-out .smoke {
+            display: block;
+        }
+
+        @keyframes smokeRise {
+            0% { transform: translate(-50%, 0) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%, -30px) scale(2.5); opacity: 0; }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased relative pb-16">
+
+    <!-- Audio Player Element (Audio sintetizado o melódico) -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73228.mp3?filename=happy-birthday-155461.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Visual Background Stars/Particles -->
+    <div id="stars-container" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="max-w-4xl mx-auto px-4 pt-8 sm:pt-12 relative z-10 space-y-12">
+
+        <!-- MUSIC CONTROLLER (Floating Top Right) -->
+        <div class="fixed top-4 right-4 z-50">
+            <button id="music-btn" onclick="toggleMusic()" class="glass-card text-gold hover:text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3 transition-all transform hover:scale-105 active:scale-95 border border-gold/30">
+                <i id="music-icon" class="fas fa-music text-lg animate-bounce"></i>
+                <span id="music-text" class="text-xs font-semibold tracking-wider uppercase">Música: OFF</span>
+            </button>
+        </div>
+
+        <!-- 1. HERO SECTION -->
+        <header class="text-center space-y-4 pt-4">
+            <div class="inline-block px-4 py-1.5 rounded-full glass-card text-gold text-xs sm:text-sm font-semibold uppercase tracking-widest border border-gold/30 mb-2">
+                🎂 ¡Día Especial de Celebración! 🎈
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight font-festive animate-glow leading-tight">
+                ¡Feliz Cumpleaños,<br class="sm:hidden"> Piero! <span class="inline-block animate-float">🎉</span>
+            </h1>
+
+            <p class="max-w-2xl mx-auto text-slate-300 text-base sm:text-lg font-light leading-relaxed">
+                Un abrazo gigante en tu día especial que viaja más de 800 kilómetros, desde el corazón verde de <span class="text-cajamarcaGreen font-semibold">Cajamarca</span> hasta la vibrante ciudad de <span class="text-limaBlue font-semibold">Lima</span>. ¡Hoy te celebramos a lo grande!
+            </p>
+        </header>
+
+        <!-- 2. MAPA & CONEXIÓN DE DISTANCIA (CAJAMARCA -> LIMA) -->
+        <section class="glass-card rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-10 -top-10 w-40 h-40 bg-accentPurp/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <h2 class="text-xl sm:text-2xl font-bold text-amber-300 mb-6 text-center flex items-center justify-center gap-2">
+                <i class="fas fa-heart text-red-500 animate-pulse"></i>
+                De Cajamarca a Lima con Orgullo Fraternal
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <!-- Origén: Cajamarca -->
+                <div class="text-center p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-cajamarcaGreen/50 transition">
+                    <div class="w-12 h-12 mx-auto mb-3 bg-cajamarcaGreen/20 rounded-full flex items-center justify-center text-cajamarcaGreen text-xl">
+                        <i class="fas fa-mountain"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Cajamarca</h3>
+                    <p class="text-xs text-slate-400 mt-1">La tierra que te extraña y te apoya siempre.</p>
+                </div>
+
+                <!-- Conexión / Abrazo -->
+                <div class="text-center space-y-2 py-2">
+                    <div class="flex items-center justify-center space-x-2 text-gold">
+                        <span class="h-0.5 w-12 bg-gradient-to-r from-cajamarcaGreen to-gold"></span>
+                        <div class="p-3 bg-slate-800 rounded-full border border-gold/40 shadow-lg animate-pulse">
+                            <i class="fas fa-plane text-xl transform rotate-45 text-gold"></i>
+                        </div>
+                        <span class="h-0.5 w-12 bg-gradient-to-r from-gold to-limaBlue"></span>
+                    </div>
+                    <p class="text-xs text-slate-300 font-semibold uppercase tracking-widest">Abrazo Virtual</p>
+                    <p class="text-xs text-amber-400 font-serif italic">"No hay distancia que apague este cariño"</p>
+                </div>
+
+                <!-- Destino: Lima -->
+                <div class="text-center p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-limaBlue/50 transition">
+                    <div class="w-12 h-12 mx-auto mb-3 bg-limaBlue/20 rounded-full flex items-center justify-center text-limaBlue text-xl">
+                        <i class="fas fa-city"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Lima</h3>
+                    <p class="text-xs text-slate-400 mt-1">Donde estás construyendo tu futuro con esfuerzo.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MENSAJE PRINCIPAL Y TARJETA -->
+        <section class="glass-card rounded-2xl p-6 sm:p-10 shadow-2xl relative border-l-4 border-l-gold">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <div class="flex-shrink-0">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-gold to-amber-600 p-1 shadow-xl">
+                        <div class="w-full h-full bg-slate-900 rounded-full flex items-center justify-center text-4xl text-gold">
+                            <i class="fas fa-user-astronaut"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-3 text-center md:text-left">
+                    <h3 class="text-2xl font-bold text-white">Hermano, ¡qué orgullo verte crecer!</h3>
+                    <p class="text-slate-300 leading-relaxed text-sm sm:text-base">
+                        Sabemos lo duro que estás trabajando allá en Lima, demostrando día a día tu valentía, responsabilidad y dedicación. Trabajar lejos de casa no es fácil, pero tu garra y empeño son una verdadera inspiración para todos nosotros en Cajamarca.
+                    </p>
+                    <p class="text-amber-300 font-medium text-sm sm:text-base">
+                        ¡Que este nuevo año de vida te traiga bendiciones, salud inquebrantable, grandes éxitos laborales y momentos inolvidables!
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. ZONA INTERACTIVA: LA TORTA DE CUMPLEAÑOS -->
+        <section class="glass-card rounded-2xl p-8 shadow-2xl text-center space-y-6 relative">
+            <div class="space-y-2">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-gold font-festive">Torta de Cumpleaños Interactiva</h2>
+                <p class="text-sm text-slate-300">Haz clic en las velas para apagarlas y pide un deseo especial para tu futuro en Lima ✨</p>
+            </div>
+
+            <!-- SVG CAKE & CANDLES -->
+            <div class="relative py-8 flex justify-center items-center">
+                <div class="relative w-64 h-56 flex flex-col items-center justify-end">
+                    
+                    <!-- CANDLES CONTAINER -->
+                    <div class="flex justify-center space-x-6 mb-1 z-20">
+                        <!-- Candle 1 -->
+                        <div class="candle cursor-pointer flex flex-col items-center group" onclick="toggleCandle(this)">
+                            <div class="relative w-3 h-6">
+                                <div class="flame-element animate-flame w-3 h-5"></div>
+                                <div class="smoke"></div>
+                            </div>
+                            <div class="w-1 h-3 bg-amber-200"></div>
+                            <div class="w-3.5 h-12 bg-gradient-to-b from-pink-400 to-pink-600 rounded-sm shadow-sm"></div>
+                        </div>
+
+                        <!-- Candle 2 (Middle) -->
+                        <div class="candle cursor-pointer flex flex-col items-center group" onclick="toggleCandle(this)">
+                            <div class="relative w-3 h-6">
+                                <div class="flame-element animate-flame w-3 h-5"></div>
+                                <div class="smoke"></div>
+                            </div>
+                            <div class="w-1 h-3 bg-amber-200"></div>
+                            <div class="w-3.5 h-14 bg-gradient-to-b from-yellow-300 to-amber-500 rounded-sm shadow-sm"></div>
+                        </div>
+
+                        <!-- Candle 3 -->
+                        <div class="candle cursor-pointer flex flex-col items-center group" onclick="toggleCandle(this)">
+                            <div class="relative w-3 h-6">
+                                <div class="flame-element animate-flame w-3 h-5"></div>
+                                <div class="smoke"></div>
+                            </div>
+                            <div class="w-1 h-3 bg-amber-200"></div>
+                            <div class="w-3.5 h-12 bg-gradient-to-b from-cyan-400 to-blue-600 rounded-sm shadow-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- CAKE BODY -->
+                    <!-- Top Layer -->
+                    <div class="w-48 h-14 bg-gradient-to-r from-amber-200 via-amber-100 to-amber-200 rounded-t-3xl shadow-md border-b-4 border-amber-300/50 relative overflow-hidden flex items-center justify-center">
+                        <div class="absolute top-0 w-full h-4 bg-rose-400 rounded-b-xl opacity-80"></div>
+                        <span class="text-amber-800/40 text-xs font-bold tracking-widest uppercase">Piero 🎉</span>
+                    </div>
+                    <!-- Middle Layer -->
+                    <div class="w-56 h-16 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 rounded-t-lg shadow-lg relative flex items-center justify-center border-t-2 border-purple-400">
+                        <div class="absolute top-0 w-full h-3 bg-amber-300 opacity-60"></div>
+                        <div class="flex space-x-3 text-gold/60 text-xs">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-crown"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <!-- Base Layer / Plate -->
+                    <div class="w-64 h-4 bg-slate-300 rounded-full shadow-2xl border-b-2 border-slate-400"></div>
+                </div>
+            </div>
+
+            <!-- Candle Status Alert -->
+            <div id="candle-status" class="text-xs font-semibold text-amber-300 bg-amber-500/10 py-1.5 px-4 rounded-full inline-block">
+                🔥 ¡Haz clic en las 3 velas para apagarlas todas!
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="flex flex-wrap justify-center gap-4 pt-4">
+                <button onclick="launchFiestaConfetti()" class="bg-gradient-to-r from-gold to-amber-600 hover:from-amber-400 hover:to-gold text-slate-950 font-bold px-6 py-3 rounded-full shadow-xl transform transition hover:-translate-y-1 hover:shadow-gold/20 active:translate-y-0 flex items-center gap-2">
+                    <i class="fas fa-glass-cheers text-lg"></i>
+                    <span>¡Lanzar más confeti y fiesta! 🥳</span>
+                </button>
+
+                <button onclick="openModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-full border border-slate-600 shadow-xl transform transition hover:-translate-y-1 active:translate-y-0 flex items-center gap-2">
+                    <i class="fas fa-envelope-open-text text-amber-400 text-lg"></i>
+                    <span>Ver Carta Fraternal Especial</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 5. PALABRAS DE ÁNIMO / BARRAS DE BUENOS DESEOS -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="glass-card p-5 rounded-2xl text-center space-y-2 border-t-2 border-amber-400">
+                <div class="text-gold text-2xl mb-1"><i class="fas fa-briefcase"></i></div>
+                <h4 class="font-bold text-white text-base">Éxito en el Trabajo</h4>
+                <p class="text-xs text-slate-300">Que cada meta profesional en Lima se cumpla con creces este año.</p>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl text-center space-y-2 border-t-2 border-emerald-400">
+                <div class="text-emerald-400 text-2xl mb-1"><i class="fas fa-heartbeat"></i></div>
+                <h4 class="font-bold text-white text-base">Salud y Energía</h4>
+                <p class="text-xs text-slate-300">Fuerza, vitalidad y buena salud para comerte el mundo día a día.</p>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl text-center space-y-2 border-t-2 border-cyan-400">
+                <div class="text-cyan-400 text-2xl mb-1"><i class="fas fa-smile-beam"></i></div>
+                <h4 class="font-bold text-white text-base">Felicidad Plena</h4>
+                <p class="text-xs text-slate-300">Que nunca te falten motivos para sonreír, disfrutar y celebrar.</p>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="text-center pt-8 border-t border-slate-800 text-xs text-slate-400 space-y-2">
+            <p>Con todo el amor de tu familia y tu hermano en <span class="text-emerald-400 font-semibold">Cajamarca</span> 💚</p>
+            <p class="text-slate-500">© 2026 - Celebración Especial para Piero</p>
+        </footer>
+    </div>
+
+    <!-- MODAL CON CARTA EXTENSA Y EMOTIVA -->
+    <div id="letter-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-modal max-w-lg w-full rounded-2xl p-6 sm:p-8 space-y-6 relative shadow-2xl transform scale-95 transition-transform duration-300 border border-gold/40" id="modal-content">
+            
+            <!-- Close button -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center transition">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto text-xl border border-amber-400/30">
+                    <i class="fas fa-scroll"></i>
+                </div>
+                <h3 class="text-2xl font-bold font-festive text-gold">Querido Piero</h3>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Un mensaje desde el fondo del corazón</p>
+            </div>
+
+            <div class="space-y-4 text-slate-200 text-sm leading-relaxed max-h-80 overflow-y-auto pr-2">
+                <p>
+                    Hermano, hoy es un día superespecial. Aunque la distancia física nos separe y tú estés en Lima trabajando duro, quiero que sepas que en Cajamarca siempre pensamos en ti con muchísimo cariño y admiración.
+                </p>
+                <p>
+                    Sabemos que asumir retos lejos de la familia exige fortaleza y valentía. Cada madrugón, cada hora de esfuerzo y cada logro que alcanzas allá son un orgullo inmenso para todos nosotros. Estás demostrando la gran persona y el profesional extraordinario que eres.
+                </p>
+                <p>
+                    Deseo de todo corazón que este nuevo año de vida venga cargado de puertas abiertas, nuevas oportunidades, personas buenas a tu alrededor y, sobre todo, mucha paz y felicidad.
+                </p>
+                <p class="font-semibold text-amber-300">
+                    ¡No olvides celebrar, darte un gusto hoy y recordar que aquí en Cajamarca tienes a tu familia esperándote siempre con los brazos abiertos!
+                </p>
+                <p class="text-right italic text-slate-400 pt-2">
+                    Con un fuerte abrazo fraternal,<br>
+                    <span class="text-gold font-bold font-sans">Tu hermano y familia 💙</span>
+                </p>
+            </div>
+
+            <div class="pt-2 text-center">
+                <button onclick="closeModal(); launchFiestaConfetti();" class="w-full bg-gradient-to-r from-gold to-amber-600 hover:from-amber-400 hover:to-gold text-slate-950 font-bold py-2.5 rounded-xl shadow-lg transition">
+                    ¡Gracias! ¡A celebrar! 🎉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Create stars background
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('stars-container');
+            const starsCount = 40;
+
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'absolute rounded-full bg-white opacity-40 animate-pulse';
+                const size = Math.random() * 3 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                container.appendChild(star);
+            }
+
+            // Automatic initial confetti greeting
+            setTimeout(() => {
+                launchFiestaConfetti();
+            }, 600);
+        });
+
+        // Toggle Candle state
+        let blownOutCount = 0;
+        function toggleCandle(element) {
+            if (!element.classList.contains('candle-out')) {
+                element.classList.add('candle-out');
+                blownOutCount++;
+
+                // Confetti mini burst
+                confetti({
+                    particleCount: 25,
+                    spread: 40,
+                    origin: { y: 0.6 }
+                });
+
+                updateCandleStatus();
+            }
+        }
+
+        function updateCandleStatus() {
+            const statusText = document.getElementById('candle-status');
+            if (blownOutCount === 1) {
+                statusText.innerHTML = "✨ ¡Falta apagar 2 velas más!";
+            } else if (blownOutCount === 2) {
+                statusText.innerHTML = "✨ ¡Solo queda 1 vela! Pide tu deseo...";
+            } else if (blownOutCount >= 3) {
+                statusText.innerHTML = "🌟 ¡Deseo concedido! ¡Que se cumplan todos tus sueños en Lima, Piero!";
+                statusText.className = "text-xs font-bold text-slate-950 bg-gold py-1.5 px-4 rounded-full inline-block animate-bounce shadow-lg";
+                
+                // Big confetti celebration
+                setTimeout(() => {
+                    launchFiestaConfetti();
+                }, 300);
+            }
+        }
+
+        // Confetti Fireworks Effect
+        function launchFiestaConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                
+                // Confetti sides
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                    colors: ['#fbbf24', '#f59e0b', '#38bdf8', '#34d399', '#f43f5e']
+                }));
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                    colors: ['#fbbf24', '#f59e0b', '#38bdf8', '#34d399', '#f43f5e']
+                }));
+            }, 250);
+        }
+
+        // Music toggle controller
+        let isPlaying = false;
+        const audio = document.getElementById('bg-music');
+        const musicBtn = document.getElementById('music-btn');
+        const musicIcon = document.getElementById('music-icon');
+        const musicText = document.getElementById('music-text');
+
+        function toggleMusic() {
+            if (isPlaying) {
+                audio.pause();
+                musicIcon.className = "fas fa-music text-lg";
+                musicText.innerText = "Música: OFF";
+                musicBtn.classList.remove('border-gold');
+                isPlaying = false;
+            } else {
+                audio.play().then(() => {
+                    musicIcon.className = "fas fa-compact-disc text-lg animate-spin text-gold";
+                    musicText.innerText = "Música: ON";
+                    musicBtn.classList.add('border-gold');
+                    isPlaying = true;
+                }).catch(err => {
+                    console.log("Audio playback prevented by browser:", err);
+                    alert("Haz clic en la pantalla para permitir reproducir el audio de cumpleaños.");
+                });
+            }
+        }
+
+        // Modal Handlers
+        const modal = document.getElementById('letter-modal');
+        const modalContent = document.getElementById('modal-content');
+
+        function openModal() {
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-95');
+            modalContent.classList.add('scale-100');
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+        }
+
+        // Close modal on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
